@@ -187,10 +187,19 @@ async def gather_live(api_id: int, api_hash: str, session_name: str,
     else:
         session = session_name
 
-    end_next = datetime(end.year, end.month, end.day, tzinfo=timezone.utc) + timedelta(days=1)
+    # Server-side bound for iter_messages. Telegram filters by UTC, but we bucket
+    # by LOCAL calendar date (below) to match the offline export and intuitive
+    # "conference day" semantics — so allow a 2-day margin to avoid dropping
+    # boundary messages in far-from-UTC timezones.
+    end_next = datetime(end.year, end.month, end.day, tzinfo=timezone.utc) + timedelta(days=2)
 
     out = []
-    async with TelegramClient(session, api_id, api_hash) as client:
+    client = TelegramClient(session, api_id, api_hash)
+    # Explicit lifecycle (clearer than `async with`, and guarantees a clean
+    # disconnect even if scanning raises). start() logs in interactively on the
+    # first run, then reuses the saved session.
+    await client.start()
+    try:
         me = await client.get_me()
         progress(f"Logged in as {('@'+me.username) if me.username else me.first_name}. "
                  "Scanning conversations (read-only)…")
@@ -217,7 +226,7 @@ async def gather_live(api_id: int, api_hash: str, session_name: str,
             snip = []  # newest-first; reversed for display
             try:
                 async for m in client.iter_messages(ent, offset_date=end_next):
-                    d = m.date.date()
+                    d = m.date.astimezone().date()  # UTC -> local calendar date
                     if d > end:
                         continue
                     if d >= start:
@@ -245,7 +254,7 @@ async def gather_live(api_id: int, api_hash: str, session_name: str,
             snippet = _snippet(list(reversed(snip)))
 
             oldest = await client.get_messages(ent, limit=1, reverse=True)
-            first_ever = oldest[0].date.date() if oldest else start
+            first_ever = oldest[0].date.astimezone().date() if oldest else start
 
             members = []
             username = ""
@@ -288,4 +297,6 @@ async def gather_live(api_id: int, api_hash: str, session_name: str,
                 "snippet": snippet,
             })
         progress(f"Done — {len(out)} contacts in the window.")
+    finally:
+        await client.disconnect()
     return out

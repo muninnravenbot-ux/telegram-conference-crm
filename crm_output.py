@@ -86,7 +86,9 @@ def write_csv(rows: list[dict], path: str) -> None:
     with open(path, "w", newline="", encoding="utf-8") as f:
         w = csv.DictWriter(f, fieldnames=CSV_FIELDS)
         w.writeheader()
-        w.writerows({k: _csv_safe(v) for k, v in r.items()} for r in rows)
+        # Build each row from CSV_FIELDS with .get() so a row missing any key
+        # can never raise ValueError at the finish line.
+        w.writerows({k: _csv_safe(r.get(k, "")) for k in CSV_FIELDS} for r in rows)
 
 
 def write_html(rows: list[dict], path: str, conference: str,

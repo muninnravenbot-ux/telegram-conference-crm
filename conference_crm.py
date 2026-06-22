@@ -17,10 +17,10 @@ Run with no arguments for a guided wizard:
     python3 conference_crm.py
 
 Or non-interactively, e.g.:
-    python3 conference_crm.py --export result.json --conference "Acme Expo 2026" \
-        --start 2026-09-10 --end 2026-09-12
-    python3 conference_crm.py --live --conference "Acme Expo 2026" \
-        --start 2026-09-10 --end 2026-09-12         # uses TG_API_ID/TG_API_HASH or prompts
+    python3 conference_crm.py --export result.json --conference "Demo Expo" \
+        --start 2025-09-10 --end 2025-09-14
+    python3 conference_crm.py --live --conference "Demo Expo" \
+        --start 2025-09-10 --end 2025-09-14         # uses TG_API_ID/TG_API_HASH or prompts
 """
 from __future__ import annotations
 
@@ -33,58 +33,81 @@ from datetime import date, datetime
 import crm_output
 import crm_sources
 
-FILTER_NOTE = """\
-Heads-up on what's included (so there are no surprises):
-  • Your 1:1 chats and SMALL groups (<= {maxg} people) are included.
-  • Large / public groups (> {maxg} people) are skipped — too noisy for a CRM.
-  • Only chats with at least one message during the conference days are listed.
-  • Everything is READ-ONLY. Nothing is ever sent, deleted, or changed.
+WELCOME = """\
+👋  Let's turn your Telegram into a post-conference CRM.
+
+In about a minute you'll have a tidy list of everyone you talked to at the
+event — who you just met, who you reconnected with, and who still needs a reply.
+
+First, the promises:
+  ✓ Read-only — I never send, delete, or change anything in your Telegram.
+  ✓ Local — your data stays on this computer and goes nowhere else.
+  ✓ I cover your 1:1 chats and small groups (up to {maxg} people).
+  ✓ Big public groups (over {maxg}) are skipped — they'd just be noise.
 """
+
+
+class _Abort(Exception):
+    """Raised to bail out of the wizard cleanly (Ctrl-D / Ctrl-C / closed stdin)."""
 
 
 def _ask(prompt: str, default: str = "") -> str:
     suffix = f" [{default}]" if default else ""
     try:
-        val = input(f"{prompt}{suffix}: ").strip()
-    except EOFError:
-        val = ""
+        val = input(f"{prompt}{suffix} ").strip()
+    except (EOFError, KeyboardInterrupt):
+        raise _Abort
     return val or default
 
 
 def _ask_date(prompt: str) -> date:
-    while True:
+    # Bounded retries so a stream of bad/empty input can't loop forever.
+    for _ in range(6):
         raw = _ask(prompt)
         try:
             return datetime.strptime(raw, "%Y-%m-%d").date()
         except ValueError:
-            print("  Please use YYYY-MM-DD (e.g. 2025-09-10).")
+            print("   ↳ I need the format YYYY-MM-DD, e.g. 2025-09-10. Try again:")
+    raise _Abort
 
 
 def wizard(args: argparse.Namespace) -> argparse.Namespace:
-    print("\n📇  Telegram Post-Conference CRM\n" + "-" * 40)
-    print(FILTER_NOTE.format(maxg=args.max_group_size))
-    args.conference = args.conference or _ask("Conference name", "My Conference")
-    print("\nWhen were the conference days? (the window we'll scan)")
-    args.start = args.start or _ask_date("  First day (YYYY-MM-DD)").isoformat()
-    args.end = args.end or _ask_date("  Last day  (YYYY-MM-DD)").isoformat()
+    print("\n" + "📇  Telegram Post-Conference CRM".center(64))
+    print("═" * 64)
+    print(WELCOME.format(maxg=args.max_group_size))
+
+    args.conference = args.conference or _ask(
+        "📛  What's the event called?", "My Conference")
+
+    print("\n📅  Which days was it? (I'll scan just that window — dates as YYYY-MM-DD)")
+    if not args.start:
+        args.start = _ask_date("    First day →").isoformat()
+    if not args.end:
+        args.end = _ask_date("    Last day  →").isoformat()
 
     if not args.live and not args.export:
-        print("\nWhere should we read your Telegram from?")
-        print("  1) LIVE  — log in with your own Telegram API key (gets @usernames + IDs)")
-        print("  2) EXPORT — a Telegram Desktop JSON export file (offline, names only)")
-        choice = _ask("Choose 1 or 2", "1")
+        print("\n🔌  How should I read your chats?\n")
+        print("    1) Live  — log in with your own Telegram key. Best results:")
+        print("              real @usernames, IDs, and one-click 'open chat' links.")
+        print("    2) File  — point me at a Telegram Desktop export instead. No login,")
+        print("              but Telegram leaves @usernames out of exports.\n")
+        choice = _ask("    Pick 1 or 2", "1")
         if choice.strip().startswith("2"):
-            args.export = _ask("Path to result.json")
+            print("\n    📄 In Telegram Desktop: Settings → Advanced → Export Telegram data")
+            print("       → tick only 'Personal chats', format 'Machine-readable JSON'.")
+            args.export = _ask("    Path to your result.json →")
         else:
             args.live = True
 
     if args.live and not (args.api_id and args.api_hash):
-        print("\nLIVE mode needs your personal Telegram API credentials (free, 1 min):")
-        print("  → Go to https://my.telegram.org → API development tools → create an app")
-        print("  → Copy the api_id (a number) and api_hash (a long string)")
-        print("  Your login session is saved locally as ./conference.session and never shared.")
-        args.api_id = args.api_id or _ask("  api_id")
-        args.api_hash = args.api_hash or _ask("  api_hash")
+        print("\n🔑  Live mode uses your own Telegram API key — free and takes a minute:")
+        print("       1. Open https://my.telegram.org  →  'API development tools'")
+        print("       2. Create an app (any name) and copy the two values below.")
+        print("    Your login stays on this machine (./conference.session) and is never shared.\n")
+        args.api_id = args.api_id or _ask("    api_id   (a number) →")
+        args.api_hash = args.api_hash or _ask("    api_hash (a long string) →")
+
+    print("\n✨  Perfect — building your CRM now. Sit tight…")
     return args
 
 
@@ -105,8 +128,17 @@ def run(args: argparse.Namespace) -> int:
                   file=sys.stderr)
             return 2
         try:
+            api_id_int = int(str(api_id).strip())
+        except ValueError:
+            print("ERROR: api_id must be a number (the api_id from my.telegram.org).",
+                  file=sys.stderr)
+            return 2
+        # Keep the session name to a safe filename — it becomes <name>.session on disk.
+        safe_session = "".join(c for c in args.session if c.isalnum() or c in ("_", "-")) \
+            or "conference"
+        try:
             aggs = asyncio.run(crm_sources.gather_live(
-                int(api_id), str(api_hash), args.session, start, end,
+                api_id_int, str(api_hash), safe_session, start, end,
                 args.max_group_size, progress=lambda s: print("  " + s),
                 session_string=session_string))
         except ImportError:
@@ -141,12 +173,15 @@ def run(args: argparse.Namespace) -> int:
     counts = {"NEW": 0, "REACTIVATED": 0, "ONGOING": 0}
     for r in rows:
         counts[r["Status"]] = counts.get(r["Status"], 0) + 1
-    print(f"\n✅  {len(rows)} contacts from '{args.conference}' "
-          f"({start} → {end})")
-    print(f"     🟢 NEW {counts['NEW']}   🟡 REACTIVATED {counts['REACTIVATED']}   "
-          f"⚪ ONGOING {counts['ONGOING']}")
-    print(f"\n   📄 {csv_path}   (open in Google Sheets / Excel)")
-    print(f"   🌐 {html_path}  (open in your browser — searchable, with follow-up checkboxes)")
+    print(f"\n🎉  Done! {len(rows)} people from '{args.conference}' ({start} → {end}):")
+    print(f"     🟢 {counts['NEW']} new (met there)   "
+          f"🟡 {counts['REACTIVATED']} reconnected   "
+          f"⚪ {counts['ONGOING']} already talking")
+    print("\n   Here's your CRM:")
+    print(f"     🌐 {html_path}   ← open this in your browser (search, links, follow-up ticks)")
+    print(f"     📄 {csv_path}   ← or this in Google Sheets / Excel")
+    print("\n   Tip: start with the 🟢 NEW folks — those connections fade fastest. "
+          "Good luck! 🙌")
     return 0
 
 
@@ -172,7 +207,11 @@ def main(argv: list[str] | None = None) -> int:
 
     needs = not (args.start and args.end and (args.live or args.export) and args.conference)
     if needs and not args.no_wizard and sys.stdin.isatty():
-        args = wizard(args)
+        try:
+            args = wizard(args)
+        except _Abort:
+            print("\n\n👋  No worries — stopped before doing anything. Run me again anytime!")
+            return 1
 
     return run(args)
 
