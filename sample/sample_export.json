@@ -1,0 +1,318 @@
+{
+  "about": "Synthetic sample — not real Telegram data.",
+  "personal_information": {
+    "user_id": 99999,
+    "first_name": "Me",
+    "last_name": "Example"
+  },
+  "chats": {
+    "about": "synthetic",
+    "list": [
+      {
+        "name": "Alice Example",
+        "type": "personal_chat",
+        "id": 1001,
+        "messages": [
+          {
+            "id": 1,
+            "type": "message",
+            "date": "2025-09-11T10:01:00",
+            "from": "Alice Example",
+            "from_id": "user1001",
+            "text": "Great meeting you at the booth!"
+          },
+          {
+            "id": 2,
+            "type": "message",
+            "date": "2025-09-11T10:02:00",
+            "from": "Me Example",
+            "from_id": "user99999",
+            "text": "Likewise — let's talk integrations"
+          },
+          {
+            "id": 3,
+            "type": "message",
+            "date": "2025-09-12T10:03:00",
+            "from": "Alice Example",
+            "from_id": "user1001",
+            "text": "Sending the deck now"
+          }
+        ]
+      },
+      {
+        "name": "Bob Demo",
+        "type": "personal_chat",
+        "id": 1002,
+        "messages": [
+          {
+            "id": 1,
+            "type": "message",
+            "date": "2023-05-01T09:00:00",
+            "from": "Bob Demo",
+            "from_id": "user1002",
+            "text": "catch up sometime"
+          },
+          {
+            "id": 2,
+            "type": "message",
+            "date": "2025-09-10T10:02:00",
+            "from": "Bob Demo",
+            "from_id": "user1002",
+            "text": "Long time! You're at the expo too?"
+          },
+          {
+            "id": 3,
+            "type": "message",
+            "date": "2025-09-10T10:03:00",
+            "from": "Me Example",
+            "from_id": "user99999",
+            "text": "Ha, yes — coffee?"
+          }
+        ]
+      },
+      {
+        "name": "Carol Sample",
+        "type": "personal_chat",
+        "id": 1003,
+        "messages": [
+          {
+            "id": 1,
+            "type": "message",
+            "date": "2025-09-03T12:00:00",
+            "from": "Carol Sample",
+            "from_id": "user1003",
+            "text": "weekly check-in"
+          },
+          {
+            "id": 2,
+            "type": "message",
+            "date": "2025-09-11T10:02:00",
+            "from": "Me Example",
+            "from_id": "user99999",
+            "text": "At the conference, ping me"
+          },
+          {
+            "id": 3,
+            "type": "message",
+            "date": "2025-09-13T10:03:00",
+            "from": "Carol Sample",
+            "from_id": "user1003",
+            "text": "nice, see you there"
+          }
+        ]
+      },
+      {
+        "name": "Dave Outbound",
+        "type": "personal_chat",
+        "id": 1004,
+        "messages": [
+          {
+            "id": 1,
+            "type": "message",
+            "date": "2025-09-12T10:01:00",
+            "from": "Me Example",
+            "from_id": "user99999",
+            "text": "Hey Dave, great chat — here's my Telegram"
+          },
+          {
+            "id": 2,
+            "type": "message",
+            "date": "2025-09-13T10:02:00",
+            "from": "Me Example",
+            "from_id": "user99999",
+            "text": "Following up on that lead"
+          }
+        ]
+      },
+      {
+        "name": "Deal Room Demo",
+        "type": "private_group",
+        "id": 2001,
+        "messages": [
+          {
+            "id": 1,
+            "type": "message",
+            "date": "2025-09-11T10:01:00",
+            "from": "Alice Example",
+            "from_id": "user1001",
+            "text": "looping in the team"
+          },
+          {
+            "id": 2,
+            "type": "message",
+            "date": "2025-09-11T10:02:00",
+            "from": "Erin Group",
+            "from_id": "user5001",
+            "text": "welcome!"
+          },
+          {
+            "id": 3,
+            "type": "message",
+            "date": "2025-09-12T10:03:00",
+            "from": "Me Example",
+            "from_id": "user99999",
+            "text": "thanks all"
+          }
+        ]
+      },
+      {
+        "name": "Big Public Chat",
+        "type": "private_supergroup",
+        "id": 3001,
+        "messages": [
+          {
+            "id": 1,
+            "type": "message",
+            "date": "2025-09-12T10:01:00",
+            "from": "Member 1",
+            "from_id": "user6001",
+            "text": "gm"
+          },
+          {
+            "id": 2,
+            "type": "message",
+            "date": "2025-09-12T10:02:00",
+            "from": "Member 2",
+            "from_id": "user6002",
+            "text": "gm"
+          },
+          {
+            "id": 3,
+            "type": "message",
+            "date": "2025-09-12T10:03:00",
+            "from": "Member 3",
+            "from_id": "user6003",
+            "text": "gm"
+          },
+          {
+            "id": 4,
+            "type": "message",
+            "date": "2025-09-12T10:04:00",
+            "from": "Member 4",
+            "from_id": "user6004",
+            "text": "gm"
+          },
+          {
+            "id": 5,
+            "type": "message",
+            "date": "2025-09-12T10:05:00",
+            "from": "Member 5",
+            "from_id": "user6005",
+            "text": "gm"
+          },
+          {
+            "id": 6,
+            "type": "message",
+            "date": "2025-09-12T10:06:00",
+            "from": "Member 6",
+            "from_id": "user6006",
+            "text": "gm"
+          },
+          {
+            "id": 7,
+            "type": "message",
+            "date": "2025-09-12T10:07:00",
+            "from": "Member 7",
+            "from_id": "user6007",
+            "text": "gm"
+          },
+          {
+            "id": 8,
+            "type": "message",
+            "date": "2025-09-12T10:08:00",
+            "from": "Member 8",
+            "from_id": "user6008",
+            "text": "gm"
+          },
+          {
+            "id": 9,
+            "type": "message",
+            "date": "2025-09-12T10:09:00",
+            "from": "Member 9",
+            "from_id": "user6009",
+            "text": "gm"
+          },
+          {
+            "id": 10,
+            "type": "message",
+            "date": "2025-09-12T10:10:00",
+            "from": "Member 10",
+            "from_id": "user6010",
+            "text": "gm"
+          },
+          {
+            "id": 11,
+            "type": "message",
+            "date": "2025-09-12T10:11:00",
+            "from": "Member 11",
+            "from_id": "user6011",
+            "text": "gm"
+          },
+          {
+            "id": 12,
+            "type": "message",
+            "date": "2025-09-12T10:12:00",
+            "from": "Member 12",
+            "from_id": "user6012",
+            "text": "gm"
+          },
+          {
+            "id": 13,
+            "type": "message",
+            "date": "2025-09-12T10:13:00",
+            "from": "Member 13",
+            "from_id": "user6013",
+            "text": "gm"
+          },
+          {
+            "id": 14,
+            "type": "message",
+            "date": "2025-09-12T10:14:00",
+            "from": "Member 14",
+            "from_id": "user6014",
+            "text": "gm"
+          },
+          {
+            "id": 15,
+            "type": "message",
+            "date": "2025-09-12T10:15:00",
+            "from": "Member 15",
+            "from_id": "user6015",
+            "text": "gm"
+          },
+          {
+            "id": 16,
+            "type": "message",
+            "date": "2025-09-12T10:16:00",
+            "from": "Member 16",
+            "from_id": "user6016",
+            "text": "gm"
+          },
+          {
+            "id": 17,
+            "type": "message",
+            "date": "2025-09-12T10:17:00",
+            "from": "Member 17",
+            "from_id": "user6017",
+            "text": "gm"
+          }
+        ]
+      },
+      {
+        "name": "Old Friend",
+        "type": "personal_chat",
+        "id": 1009,
+        "messages": [
+          {
+            "id": 1,
+            "type": "message",
+            "date": "2024-12-01T10:00:00",
+            "from": "Old Friend",
+            "from_id": "user1009",
+            "text": "happy holidays"
+          }
+        ]
+      }
+    ]
+  }
+}
