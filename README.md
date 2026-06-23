@@ -70,8 +70,21 @@ python3 conference_crm.py --export result.json --conference "Acme Expo 2026" \
 ```
 
 Either way you get **`conference_crm.csv`** (open in Google Sheets / Excel) and
-**`conference_crm.html`** — a self-contained, searchable CRM you open in your
-browser, with follow-up checkboxes that persist locally.
+**`conference_crm.html`** — a self-contained CRM you open in your browser. It's
+a real working app, not just a table:
+
+- 🔵→🟢 **Follow-up pipeline** — a per-contact dropdown (New · Contacted ·
+  Replied · Meeting · Won · Lost) with a live count of where everyone sits.
+- 📝 **Notes** — type next to anyone; saved as you go.
+- ⏰ **Reminders** — set a follow-up date; the app flags what's **due**, and a
+  📅 button drops a calendar (`.ics`) event into Google/Apple Calendar so you're
+  reminded even with the file closed.
+- ⬇⬆ **Export / Import** — **Download CRM** writes your stages, notes and
+  reminders into the CSV; **Import** reads them back — so your work is never
+  trapped in one browser, and moves cleanly to Sheets / Notion / HubSpot.
+
+Everything is stored locally in your browser (`localStorage`) — no account, no
+server, nothing leaves your machine.
 
 ---
 
