@@ -195,17 +195,23 @@ async def gather_live(api_id: int, api_hash: str, session_name: str,
     end_next = datetime(end.year, end.month, end.day, tzinfo=timezone.utc) + timedelta(days=2)
 
     # When a login fails (e.g. a revoked session key), Telethon's background
-    # sender can be left holding the error in a future that, at garbage
-    # collection, prints a confusing "Future exception was never retrieved"
-    # traceback — even though we DO raise and handle the real error below.
-    # Route just that one noise through a quiet handler.
+    # sender is left holding the error in a future that, at garbage collection
+    # (after this function has already returned and re-raised the real error),
+    # prints a confusing "Future exception was never retrieved" traceback.
+    # Install a handler that swallows ONLY that specific auth-failure future and
+    # delegates everything else to the default handler. It is intentionally not
+    # restored afterward: because the noisy future is collected at interpreter
+    # shutdown — long after we return — the handler must stay live to catch it.
+    # Scoping it to just the auth exception types keeps it from hiding any
+    # unrelated error, so leaving it installed is safe even if a larger async
+    # app ever calls this.
     loop = asyncio.get_running_loop()
     _default_handler = loop.get_exception_handler()
+    _AUTH_NOISE = ("AuthKeyNotFound", "AuthKeyUnregisteredError",
+                   "AuthKeyDuplicatedError", "UnauthorizedError")
     def _quiet_handler(lp, ctx):
-        exc = ctx.get("exception")
-        if "never retrieved" in ctx.get("message", "") or \
-                type(exc).__name__ in ("AuthKeyNotFound", "AuthKeyUnregisteredError"):
-            return
+        if type(ctx.get("exception")).__name__ in _AUTH_NOISE:
+            return  # the known login-failure future; the real error is handled above
         (_default_handler or lp.default_exception_handler)(ctx)
     loop.set_exception_handler(_quiet_handler)
 

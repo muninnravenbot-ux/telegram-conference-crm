@@ -160,6 +160,12 @@ def run(args: argparse.Namespace) -> int:
             return 2
         except Exception as e:  # noqa: BLE001 — turn cryptic auth crashes into guidance
             nm = type(e).__name__
+            if "Password" in nm:  # SessionPasswordNeededError — the account has 2FA
+                print("ERROR: this account has two-factor (2FA) login enabled and needs "
+                      "its password.", file=sys.stderr)
+                print("  Run in an interactive terminal so you can type the password, or "
+                      "pass an already-authenticated --session-string.", file=sys.stderr)
+                return 2
             if any(s in nm for s in ("AuthKey", "Unauthorized", "SessionRevoked",
                                      "Unregistered")):
                 print("ERROR: your Telegram login is no longer valid — the session was "
