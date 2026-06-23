@@ -25,6 +25,7 @@ Two sources:
 """
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from datetime import date, datetime
@@ -193,13 +194,31 @@ async def gather_live(api_id: int, api_hash: str, session_name: str,
     # boundary messages in far-from-UTC timezones.
     end_next = datetime(end.year, end.month, end.day, tzinfo=timezone.utc) + timedelta(days=2)
 
+    # When a login fails (e.g. a revoked session key), Telethon's background
+    # sender can be left holding the error in a future that, at garbage
+    # collection, prints a confusing "Future exception was never retrieved"
+    # traceback — even though we DO raise and handle the real error below.
+    # Route just that one noise through a quiet handler.
+    loop = asyncio.get_running_loop()
+    _default_handler = loop.get_exception_handler()
+    def _quiet_handler(lp, ctx):
+        exc = ctx.get("exception")
+        if "never retrieved" in ctx.get("message", "") or \
+                type(exc).__name__ in ("AuthKeyNotFound", "AuthKeyUnregisteredError"):
+            return
+        (_default_handler or lp.default_exception_handler)(ctx)
+    loop.set_exception_handler(_quiet_handler)
+
     out = []
     client = TelegramClient(session, api_id, api_hash)
     # Explicit lifecycle (clearer than `async with`, and guarantees a clean
     # disconnect even if scanning raises). start() logs in interactively on the
-    # first run, then reuses the saved session.
-    await client.start()
+    # first run, then reuses the saved session. It's inside the try so that a
+    # failed login (e.g. a revoked session key) still hits the finally and
+    # disconnects — otherwise the dangling client emits a noisy "Future
+    # exception was never retrieved" traceback at interpreter shutdown.
     try:
+        await client.start()
         me = await client.get_me()
         progress(f"Logged in as {('@'+me.username) if me.username else me.first_name}. "
                  "Scanning conversations (read-only)…")

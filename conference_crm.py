@@ -121,8 +121,6 @@ def run(args: argparse.Namespace) -> int:
     if args.live:
         api_id = args.api_id or os.environ.get("TG_API_ID") or os.environ.get("TELEGRAM_API_ID")
         api_hash = args.api_hash or os.environ.get("TG_API_HASH") or os.environ.get("TELEGRAM_API_HASH")
-        session_string = args.session_string or os.environ.get("TG_SESSION_STRING") \
-            or os.environ.get("TELEGRAM_SESSION", "")
         if not (api_id and api_hash):
             print("ERROR: live mode needs --api-id/--api-hash (or TG_API_ID/TG_API_HASH).",
                   file=sys.stderr)
@@ -136,15 +134,44 @@ def run(args: argparse.Namespace) -> int:
         # Keep the session name to a safe filename — it becomes <name>.session on disk.
         safe_session = "".join(c for c in args.session if c.isalnum() or c in ("_", "-")) \
             or "conference"
+        # Session precedence: an explicit --session-string flag always wins. Otherwise
+        # fall back to an env session string — but NOT when a saved interactive login
+        # already exists on disk. A stray TELEGRAM_SESSION (e.g. sourced from another
+        # project's .env) silently shadowing a real login is a nasty footgun.
+        session_string = args.session_string.strip() if args.session_string else ""
+        if not session_string:
+            env_str = (os.environ.get("TG_SESSION_STRING")
+                       or os.environ.get("TELEGRAM_SESSION", "")).strip()
+            if env_str and os.path.exists(safe_session + ".session"):
+                print(f"  Note: ignoring a TELEGRAM_SESSION/TG_SESSION_STRING from the "
+                      f"environment in favor of your saved {safe_session}.session login "
+                      f"(pass --session-string to use the env value instead).",
+                      file=sys.stderr)
+            else:
+                session_string = env_str
         try:
             aggs = asyncio.run(crm_sources.gather_live(
                 api_id_int, str(api_hash), safe_session, start, end,
-                args.max_group_size, progress=lambda s: print("  " + s),
+                args.max_group_size, progress=lambda s: print("  " + s, flush=True),
                 session_string=session_string))
         except ImportError:
             print("ERROR: live mode needs Telethon. Install it:\n"
                   "    python3 -m pip install telethon", file=sys.stderr)
             return 2
+        except Exception as e:  # noqa: BLE001 — turn cryptic auth crashes into guidance
+            nm = type(e).__name__
+            if any(s in nm for s in ("AuthKey", "Unauthorized", "SessionRevoked",
+                                     "Unregistered")):
+                print("ERROR: your Telegram login is no longer valid — the session was "
+                      "revoked or expired.", file=sys.stderr)
+                print("  Fix: clear the saved session and log in again:", file=sys.stderr)
+                print(f"      rm -f {safe_session}.session", file=sys.stderr)
+                print("      then re-run; you'll get a fresh phone + code login.",
+                      file=sys.stderr)
+                print("  Also unset any stale TELEGRAM_SESSION / TG_SESSION_STRING in your "
+                      "environment — an old one can shadow a good login.", file=sys.stderr)
+                return 2
+            raise
     else:
         if not args.export:
             print("ERROR: provide --export PATH or use --live (or run with no args "
