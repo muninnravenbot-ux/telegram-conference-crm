@@ -214,6 +214,17 @@ async def gather_live(api_id: int, api_hash: str, session_name: str,
             if not (is_user or is_group):
                 continue  # skip broadcast channels
 
+            # Cheap pre-filter: a dialog's own `date` is its latest message time.
+            # If the whole chat went quiet before the window, it cannot contain
+            # any in-window messages — skip it without spending a network peek.
+            # (Telegram has no server-side "active between dates" query, so this
+            # is what saves us from reading every stale conversation in full.)
+            try:
+                if dialog.date is not None and dialog.date.astimezone().date() < start:
+                    continue
+            except (ValueError, OSError):
+                pass
+
             if is_group:
                 size = getattr(ent, "participants_count", None) or 0
                 if size and size > max_group_size:
